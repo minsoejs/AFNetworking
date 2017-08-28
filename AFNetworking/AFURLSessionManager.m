@@ -321,9 +321,34 @@ didFinishDownloadingToURL:(NSURL *)location
  *  - https://github.com/AFNetworking/AFNetworking/pull/2702
  */
 
-static inline void af_swizzleSelector(Class theClass, SEL originalSelector, SEL swizzledSelector) {
-    Method originalMethod = class_getInstanceMethod(theClass, originalSelector);
-    Method swizzledMethod = class_getInstanceMethod(theClass, swizzledSelector);
+static inline Method getInstanceMethodForSelector(Class targetClass , SEL desiredSelector) {
+    SEL methodSelector;
+    unsigned int methodCount;
+    unsigned int index;
+    if (![targetClass respondsToSelector:@selector(isSubclassOfClass:)]) {
+        return 0;   //targetClass is not a class object
+    }
+    if ([targetClass isSubclassOfClass:[NSProxy class]]) {
+        targetClass = [targetClass class];
+    }
+    Method result = NULL;
+    Method* methods = class_copyMethodList(targetClass, &methodCount);
+    if(methods) {
+        for (index = 0; index < methodCount; index++) {
+            methodSelector = method_getName(methods[index]);
+            if (sel_isEqual(methodSelector, desiredSelector)) {
+                result = methods[index];
+                break;
+            }
+        }
+        free(methods);
+    }
+    return result;
+}
+
+static inline void af_swizzleSelector(Class class, SEL originalSelector, SEL swizzledSelector) {
+    Method originalMethod = getInstanceMethodForSelector(class, originalSelector);
+    Method swizzledMethod = getInstanceMethodForSelector(class, swizzledSelector);
     method_exchangeImplementations(originalMethod, swizzledMethod);
 }
 
