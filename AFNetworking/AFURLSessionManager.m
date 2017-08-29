@@ -322,9 +322,11 @@ didFinishDownloadingToURL:(NSURL *)location
  */
 
 static inline Method getInstanceMethodForSelector(Class targetClass , SEL desiredSelector) {
+    
     SEL methodSelector;
     unsigned int methodCount;
     unsigned int index;
+    
     if (![targetClass respondsToSelector:@selector(isSubclassOfClass:)]) {
         return 0;   //targetClass is not a class object
     }
